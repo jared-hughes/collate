@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "watch": {
-    "build": "src/**/*.js"
+    "build": "src/**/*.{css,js}"
   },
   "scripts": {
     "start": "per-env",
