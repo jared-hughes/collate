@@ -67,7 +67,7 @@ export default class FileList extends Component {
 							<tr key={fileID}>
 								<td className={style.filePreview}>
 									{ status==="success" ? (
-											<img src={`/profiles/${profileID}/${fileID}/preview.jpg`}/>
+											<img src={resolve(`/profiles/${profileID}/${fileID}/preview.jpg`)}/>
 										) : 
 										(
 											status==="failed" ? (
