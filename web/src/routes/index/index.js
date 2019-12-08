@@ -1,23 +1,12 @@
 import { h, Component } from 'preact';
 import style from './style';
+import FileList from '../../components/fileList';
+import { resolve } from '../../config.js';
 
 export default class Index extends Component {
 	state = {
-		profileID: 1,
-		files: [
-			{
-				filename: "File A",
-				file_id: "b86c50cb2dc2420a8efac02a8e650006"
-			},
-			{
-				filename: "File B",
-				file_id: "4a7f14c0f0dc4ce09ad1d5aee0851a87"
-			},
-			{
-				filename: "File C",
-				file_id: "14a81e6fd6224c63a56eba7a3fc2be8e"
-			},
-		],
+		profileID: undefined,
+		files: [],
 		bundles: [
 			{
 				name: "Bundle A",
@@ -36,52 +25,26 @@ export default class Index extends Component {
 			}
 		]
 	};
+	
+	componentWillMount = () => {
+		fetch(resolve("/profiles"), {
+			method: "POST"
+		}).then((resp) => resp.json())
+		.then(({profileID}) => {
+			this.setState({profileID: profileID});
+		})
+	}
+	
+	onModifyFiles = (files) => {
+		console.log("newfiles", files);
+		this.setState({files: files})
+	}
 
-	render({}, { time, count }) {
+	render = ({}, {profileID, files, bundles}) => {
 		return (
 			<div class={style.profile}>
 				<h1> Collate </h1>
-				<div>
-					<table class="files-table">
-						<tr>
-							<td class={style.filePreview}><img src="assets/Test A-0.jpg"/></td>
-							<td class="file-name">File A</td>
-							<td class="file-delete"><button>Delete</button></td>
-							<td class="file-download"><button> Download </button></td>
-						</tr>
-						<tr>
-							<td class={style.filePreview}><img src="assets/Test B-0.jpg"/></td>
-							<td class="file-name">File B</td>
-							<td class="file-delete"><button>Delete</button></td>
-							<td class="file-download"><button> Download </button></td>
-						</tr>
-						<tr>
-							<td></td>
-							<td>
-							<form>
-								<input type="file" name="file" id="fileInput" required></input>
-								<input type="reset" value="Upload" onClick={async (event)=>{
-									let fileInput = document.querySelector("#fileInput");
-									let data = new FormData();
-									data.append('file', fileInput.files[0])
-									const resp = await fetch("/profiles/example", {
-										method: 'POST',
-										body: data
-									})
-									const json = await resp.json();
-									if (json.error) {
-										console.error(json.error);
-									} else {
-										console.log("file_id", json.file_id);
-									}
-								}}></input>
-							</form>
-							</td>
-							<td></td>
-							<td></td>
-						</tr>
-					</table>
-				</div>
+				<FileList profileID={profileID} files={files} onModifyFiles={this.onModifyFiles}/>
 				<div>
 					<ul>
 						<li> Bundle A (quantity:<input type="number" min={1} value={1} class={style.smallInput}></input>) <button>Delete</button>
