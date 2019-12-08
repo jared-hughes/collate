@@ -3,8 +3,38 @@ import style from './style';
 
 export default class Index extends Component {
 	state = {
-		time: Date.now(),
-		count: 10
+		profileID: 1,
+		files: [
+			{
+				filename: "File A",
+				file_id: "b86c50cb2dc2420a8efac02a8e650006"
+			},
+			{
+				filename: "File B",
+				file_id: "4a7f14c0f0dc4ce09ad1d5aee0851a87"
+			},
+			{
+				filename: "File C",
+				file_id: "14a81e6fd6224c63a56eba7a3fc2be8e"
+			},
+		],
+		bundles: [
+			{
+				name: "Bundle A",
+				quantity: 1,
+				files: [
+					"b86c50cb2dc2420a8efac02a8e650006",
+					"4a7f14c0f0dc4ce09ad1d5aee0851a87"
+				]
+			},
+			{
+				name: "Bundle B",
+				quantity: 2,
+				files: [
+					"14a81e6fd6224c63a56eba7a3fc2be8e"
+				]
+			}
+		]
 	};
 
 	render({}, { time, count }) {
@@ -27,7 +57,26 @@ export default class Index extends Component {
 						</tr>
 						<tr>
 							<td></td>
-							<td><button> Upload New File </button></td>
+							<td>
+							<form>
+								<input type="file" name="file" id="fileInput" required></input>
+								<input type="reset" value="Upload" onClick={async (event)=>{
+									let fileInput = document.querySelector("#fileInput");
+									let data = new FormData();
+									data.append('file', fileInput.files[0])
+									const resp = await fetch("/profiles/example", {
+										method: 'POST',
+										body: data
+									})
+									const json = await resp.json();
+									if (json.error) {
+										console.error(json.error);
+									} else {
+										console.log("file_id", json.file_id);
+									}
+								}}></input>
+							</form>
+							</td>
 							<td></td>
 							<td></td>
 						</tr>
