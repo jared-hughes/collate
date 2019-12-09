@@ -27,6 +27,30 @@ export default class Index extends Component {
 	onModifyBundles = (bundles) => {
 		this.setState({bundles: bundles})
 	}
+	
+	output = async () => {
+		// let data = new FormData();
+		// data.append('bundles', this.state.bundles)
+		const data = {"bundles": this.state.bundles};
+		const response = await fetch(resolve(`/profiles/${this.state.profileID}/collate`), {
+			method: "POST",
+			headers: {
+      	'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
+		})
+		// https://blog.jayway.com/2017/07/13/open-pdf-downloaded-api-javascript/
+		const newBlob = new Blob([await response.blob()], {type: "application/pdf"});
+		const href = window.URL.createObjectURL(newBlob);
+		let link = document.createElement("a");
+		link.href = href;
+		link.download = "file.pdf";
+		link.click();
+		setTimeout(function(){
+	    // For Firefox it is necessary to delay revoking the ObjectURL
+	    window.URL.revokeObjectURL(data);
+	  }, 100);
+	}
 
 	render = ({}, {profileID, files, bundles}) => {
 		console.log("files", this.state.files);
@@ -39,7 +63,9 @@ export default class Index extends Component {
 				{
 					bundles.length > 0 && bundles[0].files.length > 0 && (
 						<div>
-							<button> Download output PDF </button>
+							<button onClick={this.output}>
+								Download output PDF
+							</button>
 						</div>
 					)
 				}
