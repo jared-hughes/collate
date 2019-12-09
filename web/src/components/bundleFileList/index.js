@@ -41,8 +41,10 @@ export default class BundleList extends Component {
 		this.props.onModifyFiles([...this.props.files, this.getFile(fileID).fileID]);
 	}
 	
-	removeBundleFile = (fileID) => {
-		this.props.onModifyFiles(this.props.files.filter(f => f !== fileID));
+	removeBundleFile = (index) => {
+		let files = this.props.files;
+		files.splice(index, 1);
+		this.props.onModifyFiles(files);
 	}
 
 	render = ({files, allFiles}, {}) => {
@@ -66,7 +68,7 @@ export default class BundleList extends Component {
 	                    >
 	                      {this.getContent(fileID)}
 												<button onClick={()=>{
-													this.removeBundleFile(fileID);
+													this.removeBundleFile(index);
 												}}>
 													Delete
 												</button>
