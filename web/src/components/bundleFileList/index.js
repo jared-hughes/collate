@@ -11,6 +11,10 @@ const reorder = (list, startIndex, endIndex) => {
 };
 
 export default class BundleList extends Component {
+	state = {
+		fileSelected: "",
+	}
+	
 	getFile = (fileID) => {
 		for (const file of this.props.allFiles) {
 			if (file.fileID == fileID) {
@@ -47,7 +51,8 @@ export default class BundleList extends Component {
 		this.props.onModifyFiles(files);
 	}
 
-	render = ({files, allFiles}, {}) => {
+	render = ({files, allFiles}, {fileSelected}) => {
+		console.log("file selected", fileSelected);
     return (
 			<>
 	      <DragDropContext onDragEnd={this.onDragEnd}>
@@ -83,7 +88,17 @@ export default class BundleList extends Component {
 	      </DragDropContext>
 				<ul><li>
 					<form>
-						<select name="select-file" id="select-file">
+						<select name="select-file" onChange={(e) => {
+							console.log("setting file", e.target.value);
+							this.setState({fileSelected: e.target.value});
+						}} value={fileSelected}>
+							{
+								!fileSelected && (
+									<option value="" disabled={true} hidden={true}>
+										Choose a file
+									</option>
+								)
+							}
 							{
 								allFiles.map(({filename, fileID}) => (
 									<option value={fileID}>
@@ -92,10 +107,9 @@ export default class BundleList extends Component {
 								))
 							}
 						</select>
-						<input type="reset" value="Add" onClick={(event)=>{
-							const fileSelect = document.querySelector("#select-file");
-							const fileID = fileSelect.value;
-							this.addBundleFile(fileID);
+						<input type="reset" value="Add" disabled={!fileSelected} onClick={(e)=>{
+							e.preventDefault();
+							this.addBundleFile(fileSelected);
 						}}></input>
 					</form>
 				</li></ul>
