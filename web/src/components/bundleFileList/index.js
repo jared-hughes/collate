@@ -23,10 +23,10 @@ export default class BundleList extends Component {
 		}
 		// not found --- doesn't exist
 		this.removeBundleFile(fileID);
-		return {filename:"Deleting..."};
+		return {name:"Deleting..."};
 	}
 	
-	getContent = (fileID) => this.getFile(fileID).filename
+	getContent = (fileID) => this.getFile(fileID).name
 	
 	onDragEnd = (result) => {
 		// dropped outside the list
@@ -100,9 +100,9 @@ export default class BundleList extends Component {
 								)
 							}
 							{
-								allFiles.map(({filename, fileID}) => (
+								allFiles.map(({name, fileID}) => (
 									<option value={fileID}>
-										{filename}
+										{name}
 									</option>
 								))
 							}

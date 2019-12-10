@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
 import os
+from tempfile import TemporaryFile
 
-def collate(bundles, outfolder):
+def collate(bundles):
     # TODO: do this properly instead of __file__
     stripePath = os.path.join(os.path.dirname(__file__), 'stripe.pdf')
     wpdf = PdfFileReader(open(stripePath, "rb"))
@@ -13,8 +14,9 @@ def collate(bundles, outfolder):
         subpdf = PdfFileWriter()
         numLeft = len(bundle["files"])
         for fileToInsert in bundle["files"]:
+            # fileToInsert is passed as a file-like object from Flask
             numLeft -= 1
-            ipdf = PdfFileReader(open(fileToInsert, "rb"))
+            ipdf = PdfFileReader(fileToInsert)
             length = ipdf.getNumPages()
             for i in range(length):
                 page = ipdf.getPage(i)
@@ -22,15 +24,15 @@ def collate(bundles, outfolder):
                     page.mergePage(endmark)
                 subpdf.addPage(page)
         # had trouble merging PdfFileMerger-s, so save this and reopen
-        # TODO: possibility for concurrency issues -- store hash to circumvent?
-        subpdfPath = os.path.join(outfolder, ".subpdf.pdf")
-        with open(subpdfPath, 'wb') as f:
-            subpdf.write(f)
-        subpdf = PdfFileReader(open(subpdfPath, "rb"));
+        subpdfFile = TemporaryFile()
+        subpdf.write(subpdfFile)
+        subpdfFile.seek(0)
+        subpdf = PdfFileReader(subpdfFile)
         length = subpdf.getNumPages()
         for i in range(bundle["copies"]):
             output.append(subpdf)
-        os.remove(subpdfPath)
-    outfilePath = os.path.join(outfolder, "outfile.pdf");
-    output.write(outfilePath)
-    return outfilePath
+        subpdfFile.close()
+    outfile = TemporaryFile()
+    output.write(outfile)
+    outfile.seek(0)
+    return outfile

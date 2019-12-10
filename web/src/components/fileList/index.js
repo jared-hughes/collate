@@ -1,94 +1,85 @@
 import { h, Component } from 'preact';
 import style from './style.css';
 import { resolve } from '../../config.js';
+import { showPDF } from '../../utils/utils.js';
+
+function humanFilename(pdfname) {
+	let dotsplit = pdfname.split(".");
+	if (dotsplit.length > 1) {
+		dotsplit.splice(-1, 1);
+	}
+	return dotsplit.join(".");
+}
 
 export default class FileList extends Component {
-	uploadFile = async (profileID, file, files, onModifyFiles) => {
-		let data = new FormData();
-		data.append('file', file)
-		const pendingKey = file.name + Date.now();
-		onModifyFiles([
-			...files,
-			{filename: file.name, fileID: pendingKey, status: "pending"}
-		]);
-		try {
-			const resp = await fetch(resolve(`/profiles/${profileID}`), {
-				method: 'POST',
-				body: data
-			})
-			const json = await resp.json();
-			console.log("fileID", json);
-			onModifyFiles(this.props.files.map((file) => {
-				if (file.fileID == pendingKey) {
-					return {
-						...file,
-						fileID: json.fileID,
-						status: "success"
-					}
-				}
-				return file;
-			}));
-		} catch {
-			onModifyFiles(this.props.files.map((file) => {
-				if (file.fileID == pendingKey) {
-					return {
-						...file,
-						status: "failed"
-					}
-				}
-				return file;
-			}));
-		}
+	state = {
+		nextID: 1
 	}
 	
-	deleteFile = (profileID, fileID, files, onModifyFiles, serverToo) => {
-		if (serverToo) {
-			fetch(resolve(`/profiles/${profileID}/${fileID}`), {
-				method: 'DELETE'
-			})
-		}
-		// do this whether or not it is successful server-side
-		// the resource might as well stay there
-		onModifyFiles(this.props.files.filter(
+	addFile = async (file) => {
+		const filenumID = this.state.nextID;
+		this.setState({nextID: filenumID+1})
+		const fileID = "file-" + filenumID;
+		this.props.onModifyFiles([
+			...this.props.files,
+			/* name kept separate from file.name for different human names */
+			{file, fileID, name: humanFilename(file.name)}
+		]);
+		let data = new FormData();
+		data.append('file', file);
+		const response = await fetch(resolve(`/get_preview`), {
+			method: "POST",
+			body: data
+		})
+		const blob = await response.blob();
+	  const previewURL = window.URL.createObjectURL(blob);
+		this.props.onModifyFiles(this.props.files.map((file) =>
+			(file.fileID == fileID) ? {...file, preview: previewURL} : file
+		))
+	}
+	
+	deleteFile = (fileID) => {
+		this.props.onModifyFiles(this.props.files.filter(
 			(file) => file.fileID !== fileID)
 		)
 	}
 	
-	viewFile = (profileID, fileID) => {
-		window.open(resolve(`/profiles/${profileID}/${fileID}/file.pdf`))
+	viewFile = (fileID) => {
+		for (const file of this.props.files) {
+			if (file.fileID === fileID) {
+				showPDF(file.file)
+				return;
+			}
+		}
 	}
 	
-	render = ({files, profileID, onModifyFiles}, {}) => {
+	render = ({files, onModifyFiles}, {}) => {
 		return (
 			<div>
 				<table class="files-table">
 					{
-						files.map(({filename, fileID, status}) => (
+						files.map(({file, fileID, preview, name}) => (
 							<tr key={fileID}>
 								<td className={style.filePreview}>
-									{ status==="success" ? (
-											<img src={resolve(`/profiles/${profileID}/${fileID}/preview.jpg`)}/>
+									{ preview ? (
+											<img src={preview}/>
 										) : 
 										(
-											status==="failed" ? (
-												<div> X </div>
-											) : (
-												<div> O </div>
-											)
+											<div> O </div>
 										)
 									}
 								</td>
-								<td class="file-name">{filename}</td>
+								<td class="file-name">{name}</td>
 								<td class="file-delete" disabled={status==="pending"} onClick={
 									(e) => {
-										this.deleteFile(profileID, fileID, files, onModifyFiles, status!=="failed");
+										this.deleteFile(fileID);
 									}
 								}>
 									<button>Delete</button></td>
 								<td class="file-download">
 									<button disabled={status!=="success"} onClick={
 										(e) => {
-											this.viewFile(profileID, fileID);
+											this.viewFile(fileID);
 										}
 									}> Download </button>
 								</td>
@@ -100,10 +91,10 @@ export default class FileList extends Component {
 						<td>
 						<form>
 							<input type="file" name="file" id="fileInput" accept="application/pdf" required></input>
-							<input type="reset" value="Upload" onClick={async (event)=>{
+							<input type="reset" value="Add" onClick={(event)=>{
 								const fileInput = document.querySelector("#fileInput");
 								const file = fileInput.files[0];
-								this.uploadFile(profileID, file, files, onModifyFiles);
+								this.addFile(file);
 							}}></input>
 						</form>
 						</td>
