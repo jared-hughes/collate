@@ -1,6 +1,6 @@
 const dev = process.env.NODE_ENV !== 'production';
 
-export const server = 'http://localhost:5000';
+export const server = dev ? 'http://localhost:5000' : 'https://gentle-anchorage-49741.herokuapp.com/';
 
 export function resolve(url) {
   // wrapper to avoid Node complaint
